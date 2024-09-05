@@ -16,10 +16,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 
 @Configuration
@@ -29,9 +32,13 @@ public class SecurityConfiguration {
     @Resource
     AuthorizeService authorizeService;
 
+    @Resource
+    DataSource dataSources;
+
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           PersistentTokenRepository repository) throws Exception {
         return http
                 .authorizeHttpRequests(conf -> conf.anyRequest().authenticated())
                 .formLogin(conf -> {
@@ -48,10 +55,20 @@ public class SecurityConfiguration {
                 .cors(conf -> conf.configurationSource(this.corsConfigurationSource()))
                 .exceptionHandling(conf -> conf.authenticationEntryPoint(this::onAuthenticationFailure))
                 .rememberMe(conf -> {
-
+                    conf.rememberMeParameter("remember");
+                    conf.tokenRepository(repository);
+                    conf.tokenValiditySeconds(3600 * 24 * 7);
                 })
                 .build();
 
+    }
+
+    @Bean
+    public PersistentTokenRepository tokenRepository() {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSources);
+        jdbcTokenRepository.setCreateTableOnStartup(false);      //创建remember me表，第二次就不用创建了，设置为false
+        return jdbcTokenRepository;
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
@@ -71,7 +88,7 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         response.setCharacterEncoding("utf-8");
         if (request.getRequestURI().endsWith("/login"))
             response.getWriter().write(JSONObject.toJSONString(RestBean.success("登录成功！")));
@@ -81,7 +98,7 @@ public class SecurityConfiguration {
 
     }
 
-    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
         response.setCharacterEncoding("utf-8");
         response.getWriter().write(JSONObject.toJSONString(RestBean.failure(401, exception.getMessage())));
     }
