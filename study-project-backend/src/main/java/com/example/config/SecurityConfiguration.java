@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.example.entity.RestBean;
 import com.example.service.AuthorizeService;
 import jakarta.annotation.Resource;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
