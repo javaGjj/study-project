@@ -39,7 +39,10 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            PersistentTokenRepository repository) throws Exception {
         return http
-                .authorizeHttpRequests(conf -> conf.anyRequest().authenticated())
+                .authorizeHttpRequests(conf -> {
+                    conf.requestMatchers("/api/auth/**").permitAll();
+                    conf.anyRequest().authenticated();
+                })
                 .formLogin(conf -> {
                     conf.loginProcessingUrl("/api/auth/login");
                     conf.successHandler(this::onAuthenticationSuccess);
