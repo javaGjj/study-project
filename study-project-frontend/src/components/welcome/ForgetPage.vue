@@ -12,7 +12,7 @@
         <div style="font-size: 14px;color: grey">请输入需要重置密码的电子邮箱地址</div>
       </div>
       <div style="margin-top: 50px">
-        <el-form :model="form" :rules @validate="onValidata" ref="formRef">
+        <el-form :model="form" :rules @validate="onValidate" ref="formRef">
           <el-form-item prop="email">
             <el-input v-model="form.email" type="text" placeholder="电子邮箱">
               <template #prefix>
@@ -40,7 +40,7 @@
         </el-form>
       </div>
       <div style="margin-top: 70px">
-        <el-button @click="active = 1" style="width: 270px;" type="danger" plain>开始重置密码</el-button>
+        <el-button @click="startReset()" style="width: 270px;" type="danger" plain>开始重置密码</el-button>
       </div>
     </div>
   </transition>
@@ -52,16 +52,16 @@
       </div>
       <div>
         <div style="margin-top: 50px">
-          <el-form :model="form" :rules @validate="onValidata" ref="formRef">
+          <el-form :model="form" :rules @validate="onValidate" ref="formRef">
             <el-form-item prop="password">
-              <el-input v-model="form.password" :maxlength="16" type="password" placeholder="密码">
+              <el-input v-model="form.password" :maxlength="16" type="password" placeholder="新密码">
                 <template #prefix>
                   <el-icon><Lock /></el-icon>
                 </template>
               </el-input>
             </el-form-item>
             <el-form-item prop="password_repeat">
-              <el-input v-model="form.password_repeat" :maxlength="16" type="password" placeholder="重复密码">
+              <el-input v-model="form.password_repeat" :maxlength="16" type="password" placeholder="重复新密码">
                 <template #prefix>
                   <el-icon><Lock /></el-icon>
                 </template>
@@ -71,7 +71,7 @@
         </div>
       </div>
       <div style="margin-top: 70px">
-        <el-button @click="active = 1" style="width: 270px;" type="danger" plain>立即重置密码</el-button>
+        <el-button @click="doReset()" style="width: 270px;" type="danger" plain>立即重置密码</el-button>
       </div>
     </div>
 
@@ -81,12 +81,17 @@
 <script setup>
 import {reactive, ref} from "vue";
 import {EditPen, Lock, Message} from "@element-plus/icons-vue";
+import {post} from "@/net/index.js";
+import {ElMessage} from "element-plus";
+import router from "@/router/index.js";
 
   const active = ref(0)
 
   const form = reactive({
     email: '',
-    code: ''
+    code: '',
+    password: '',
+    password_repeat: '',
   })
 
 const validatePassword = (rule, value, callback) => {
@@ -99,7 +104,54 @@ const validatePassword = (rule, value, callback) => {
   }
 }
 
+const codeTime = ref(0)
+const formRef = ref()
+const isEmailValid = ref(false)
 
+const onValidate = (prop, isValid) => {
+  if (prop === 'email')
+    isEmailValid.value = isValid
+}
+
+const validateEmail = () => {
+  post('api/auth/valid-reset-email', {
+    email: form.email
+  }, (message) => {
+    ElMessage.success(message)
+    codeTime.value = 60
+    setInterval(() => codeTime.value--, 1000)
+  })
+}
+
+const startReset = () => {
+  formRef.value.validate((isValid) => {
+    if (isValid) {
+      post('api/auth/start-reset', {
+        email: form.email,
+        code: form.code
+      }, () => {
+        active.value++
+      })
+    } else {
+      ElMessage.warning('请填写电子邮件地址和验证码')
+    }
+  })
+}
+
+const doReset = () => {
+  formRef.value.validate((isValid) => {
+    if (isValid) {
+      post('api/auth/do-reset', {
+        password: form.password
+      }, (message) => {
+        ElMessage.success(message)
+        router.push('/')
+      })
+    } else {
+      ElMessage.warning('请填写新的密码')
+    }
+  })
+}
 
   const rules = {
     email: [

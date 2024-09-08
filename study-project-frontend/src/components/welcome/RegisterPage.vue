@@ -5,7 +5,7 @@
       <div style="font-size: 14px;color: grey">欢迎注册我们的学习平台，请在下方填写相关信息</div>
     </div>
     <div style="margin-top: 50px">
-      <el-form :model="form" :rules @validate="onValidata" ref="formRef">
+      <el-form :model="form" :rules @validate="onValidate" ref="formRef">
         <el-form-item prop="username">
           <el-input v-model="form.username" :maxlength="8" type="text" placeholder="用户名">
             <template #prefix>
@@ -83,7 +83,7 @@ const form = reactive({
 })
 
 const validateEmail = () => {
-  post('api/auth/valid-email', {
+  post('api/auth/valid-register-email', {
     email: form.email
   }, (message) => {
     ElMessage.success(message)
@@ -135,7 +135,7 @@ const rules = {
 const formRef = ref()
 const isEmailValid = ref(false)
 
-const onValidata = (prop, isValid) => {
+const onValidate = (prop, isValid) => {
   if (prop === 'email')
     isEmailValid.value = isValid
 }

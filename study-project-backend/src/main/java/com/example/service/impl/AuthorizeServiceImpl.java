@@ -1,11 +1,9 @@
 package com.example.service.impl;
 
 import com.example.entity.Account;
-import com.example.entity.RestBean;
 import com.example.mapper.UserMapper;
 import com.example.service.AuthorizeService;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.MailException;
@@ -61,14 +59,17 @@ public class AuthorizeServiceImpl implements AuthorizeService {
           5. 用户在注册时，再从Redis里面去除对应键值对，然后看验证码是否一致
          */
     @Override
-    public String sendValidateEmail(String email, String sessionId) {
+    public String sendValidateEmail(String email, String sessionId, boolean hasAccount) {
 
-        String key = "email: " + sessionId + ":" + email;
+        String key = "email: " + sessionId + ":" + email + ":" + hasAccount;
         if (Boolean.TRUE.equals(template.hasKey(key))) {
             Long expire = Optional.ofNullable(template.getExpire(key, TimeUnit.SECONDS)).orElse(0L);
             if (expire > 120) return "访问频繁，请稍后再试";
         }
-        if (mapper.findAccountByNameOrEmail(email) != null)
+        Account account = mapper.findAccountByNameOrEmail(email);
+        if (hasAccount && account == null)
+            return "找不到此邮箱地址的用户";
+        if (!hasAccount && account != null)
             return "此邮箱已被注册";
         Random random = new Random();
         int code = random.nextInt(899999)+100000;
@@ -90,18 +91,37 @@ public class AuthorizeServiceImpl implements AuthorizeService {
 
     @Override
     public String validateAndRegister(String username, String password, String email, String code, String sessionId) {
-        String key = "email: " + sessionId + ":" + email;
-        Boolean b = template.hasKey(key);
-        System.out.println("key: "+key);
-        System.out.println("hasKey(): "+b);
+        String key = "email: " + sessionId + ":" + email + ":false";
         if (Boolean.TRUE.equals(template.hasKey(key))) {
             String s = template.opsForValue().get(key);
             if (s == null) return "验证码已过期，请重新请求";
             if (s.equals(code)) {
+                Account account = mapper.findAccountByNameOrEmail(username);
+                if (account != null) return "此用户名已被注册，请更换用户名";
+                template.delete(key);
                 password = encoder.encode(password);
                 if (mapper.createAccount(username, email, password) > 0) return null;
                 else return "内部错误，请联系管理员";
             } else return "验证码错误，请检查后再提交";
         } else return "请先请求一封验证码邮件";
+    }
+
+    @Override
+    public String validateOnly(String email, String code, String sessionId) {
+        String key = "email: " + sessionId + ":" + email + ":true";
+        if (Boolean.TRUE.equals(template.hasKey(key))) {
+            String s = template.opsForValue().get(key);
+            if (s == null) return "验证码已过期，请重新请求";
+            if (s.equals(code)) {
+                template.delete(key);
+                return null;
+            } else return "验证码错误，请检查后再提交";
+        } else return "请先请求一封验证码邮件";
+    }
+
+    @Override
+    public Boolean resetPassword(String email, String password) {
+        password = encoder.encode(password);
+        return mapper.resetPasswordByEmail(email, password) > 0;
     }
 }
