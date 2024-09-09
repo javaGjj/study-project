@@ -83,12 +83,15 @@ const form = reactive({
 })
 
 const validateEmail = () => {
+  codeTime.value = 60
   post('api/auth/valid-register-email', {
     email: form.email
   }, (message) => {
     ElMessage.success(message)
-    codeTime.value = 60
     setInterval(() => codeTime.value--, 1000)
+  },(message) => {
+    ElMessage.warning(message)
+    codeTime.value = 0
   })
 }
 

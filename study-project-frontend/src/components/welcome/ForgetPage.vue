@@ -104,9 +104,10 @@ const validatePassword = (rule, value, callback) => {
   }
 }
 
-const codeTime = ref(0)
+
 const formRef = ref()
 const isEmailValid = ref(false)
+const codeTime = ref(0)
 
 const onValidate = (prop, isValid) => {
   if (prop === 'email')
@@ -114,12 +115,15 @@ const onValidate = (prop, isValid) => {
 }
 
 const validateEmail = () => {
+  codeTime.value = 60
   post('api/auth/valid-reset-email', {
     email: form.email
   }, (message) => {
     ElMessage.success(message)
-    codeTime.value = 60
     setInterval(() => codeTime.value--, 1000)
+  }, (message) => {
+    ElMessage.warning(message)
+    codeTime.value = 0
   })
 }
 

@@ -1,7 +1,5 @@
 package com.example.service;
 
-import com.example.entity.RestBean;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 public interface AuthorizeService extends UserDetailsService {
