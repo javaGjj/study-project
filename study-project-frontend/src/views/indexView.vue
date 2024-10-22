@@ -1,6 +1,6 @@
 <template>
   <div>
-    欢迎{{store.auth.user.username}}进入学习平台
+    欢迎 {{store.auth.user.username}} 进入上班群官方网站
   </div>
   <div>
     <el-button @click="logout()" type="danger" plain>退出登录</el-button>

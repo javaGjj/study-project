@@ -8,7 +8,10 @@ import 'element-plus/dist/index.css'
 import axios from "axios";
 
 const app = createApp(App)
-axios.defaults.baseURL = 'http://localhost:8080'
+// 本地
+// axios.defaults.baseURL = 'http://localhost:8080'
+// 服務器
+axios.defaults.baseURL = 'http://47.243.40.152:8080'
 
 app.use(createPinia())
 app.use(router)
