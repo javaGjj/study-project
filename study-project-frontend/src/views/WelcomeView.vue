@@ -6,7 +6,7 @@
     </div>
     <div class="welcome-title">
       <div style="font-size: 30px;font-weight: bold">欢迎来到上班群官方网站</div>
-      <div style="margin-top: 10px">兄弟们好！张哥，马哥，欢迎到来~~~</div>
+      <div style="margin-top: 10px">兄弟们好！</div>
       <div style="margin-top: 10px">我们专注于《火影忍者》、《炉石传说》、《英雄联盟》、《地下城与勇士》等各类游戏，非常的帅气！！！</div>
     </div>
     <div style="width: 400px;background-color: white;z-index: 1">
